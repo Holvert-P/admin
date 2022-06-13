@@ -181,12 +181,16 @@ const ProductTable: React.FC<ProductTableProps> = () => {
           {showList ? (
             <>
               <Table.Head>
-                {headerGroups?.map((headerGroup) => (
-                  <Table.HeadRow {...headerGroup.getHeaderGroupProps()}>
-                    {headerGroup.headers.map((col) => (
+                {headerGroups?.map((headerGroup, indexHeaderGroup) => (
+                  <Table.HeadRow
+                    {...headerGroup.getHeaderGroupProps()}
+                    key={indexHeaderGroup}
+                  >
+                    {headerGroup.headers.map((col, indexHead) => (
                       <Table.HeadCell
                         className="min-w-[100px]"
                         {...col.getHeaderProps()}
+                        key={indexHead}
                       >
                         {col.render("Header")}
                       </Table.HeadCell>
@@ -198,9 +202,9 @@ const ProductTable: React.FC<ProductTableProps> = () => {
                 isLoading={isLoading || isRefetching || !products}
               >
                 <Table.Body {...getTableBodyProps()}>
-                  {rows.map((row) => {
+                  {rows.map((row, indexRow) => {
                     prepareRow(row)
-                    return <ProductRow row={row} />
+                    return <ProductRow row={row} key={indexRow} />
                   })}
                 </Table.Body>
               </LoadingContainer>
@@ -233,8 +237,11 @@ const ProductTable: React.FC<ProductTableProps> = () => {
     </div>
   )
 }
-
-const LoadingContainer = ({ isLoading, children }) => {
+interface items {
+  isLoading?: boolean
+  children?: React.ReactNode
+}
+const LoadingContainer = ({ isLoading, children }: items) => {
   return isLoading ? (
     <div className="w-full pt-2xlarge flex items-center justify-center">
       <Spinner size={"large"} variant={"secondary"} />
@@ -255,15 +262,13 @@ const ProductRow = ({ row }) => {
       actions={getActions()}
       {...row.getRowProps()}
     >
-      {" "}
       {row.cells.map((cell, index) => {
         return (
-          <Table.Cell {...cell.getCellProps()}>
-            {" "}
-            {cell.render("Cell", { index })}{" "}
+          <Table.Cell {...cell.getCellProps()} key={index}>
+            {cell.render("Cell", { index })}
           </Table.Cell>
         )
-      })}{" "}
+      })}
     </Table.Row>
   )
 }

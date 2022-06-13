@@ -160,7 +160,7 @@ const OrderTable: React.FC<RouteComponentProps> = () => {
           {headerGroups?.map((headerGroup, index) => (
             <Table.HeadRow {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map((col, headerIndex) => (
-                <Table.HeadCell {...col.getHeaderProps()}>
+                <Table.HeadCell {...col.getHeaderProps()} key={headerIndex}>
                   {col.render("Header")}
                 </Table.HeadCell>
               ))}
@@ -183,6 +183,7 @@ const OrderTable: React.FC<RouteComponentProps> = () => {
                   linkTo={row.original.id}
                   {...row.getRowProps()}
                   className="group"
+                  key={rowIndex}
                 >
                   {row.cells.map((cell, index) => {
                     return cell.render("Cell", { index })

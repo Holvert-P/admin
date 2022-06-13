@@ -78,7 +78,7 @@ const Table: TableType = React.forwardRef(
       containerClassName,
       ...props
     }: TableProps,
-    ref
+    ref: any
   ) => {
     if (enableSearch && !handleSearch) {
       throw new Error("Table cannot enable search without a search handler")
@@ -90,7 +90,9 @@ const Table: TableType = React.forwardRef(
           {filteringOptions ? (
             <div className="flex mb-2 self-end">
               {Array.isArray(filteringOptions)
-                ? filteringOptions.map((fo) => <FilteringOptions {...fo} />)
+                ? filteringOptions.map((fo, indexFo) => (
+                    <FilteringOptions {...fo} key={indexFo} />
+                  ))
                 : filteringOptions}
             </div>
           ) : (
@@ -122,7 +124,7 @@ const Table: TableType = React.forwardRef(
 Table.Head = React.forwardRef(
   (
     { className, children, ...props }: React.HTMLAttributes<HTMLTableElement>,
-    ref
+    ref: any
   ) => (
     <thead
       ref={ref}
@@ -144,7 +146,7 @@ Table.HeadRow = React.forwardRef(
       children,
       ...props
     }: React.HTMLAttributes<HTMLTableRowElement>,
-    ref
+    ref: any
   ) => (
     <tr ref={ref} className={clsx(className)} {...props}>
       {children}
@@ -159,7 +161,7 @@ Table.HeadCell = React.forwardRef(
       children,
       ...props
     }: React.HTMLAttributes<HTMLTableCellElement> & { colSpan?: number },
-    ref
+    ref: any
   ) => (
     <th ref={ref} className={clsx("text-left h-[40px]", className)} {...props}>
       {children}
@@ -177,13 +179,13 @@ Table.SortingHeadCell = React.forwardRef(
       children,
       ...props
     }: SortingHeadCellProps,
-    ref
+    ref: any
   ) => {
     return (
       <th ref={ref} className={clsx("text-left py-2.5", className)} {...props}>
         <div
           className="flex items-center cursor-pointer select-none"
-          onClick={(e) => {
+          onClick={(e: { preventDefault: () => void }) => {
             e.preventDefault()
             if (!sortDirection) {
               setSortDirection("ASC")
@@ -216,7 +218,7 @@ Table.Body = React.forwardRef(
       children,
       ...props
     }: React.HTMLAttributes<HTMLTableSectionElement>,
-    ref
+    ref: any
   ) => (
     <tbody ref={ref} className={clsx(className)} {...props}>
       {children}
@@ -225,13 +227,13 @@ Table.Body = React.forwardRef(
 )
 
 Table.Cell = React.forwardRef(
-  ({ className, linkTo, children, ...props }: TableCellProps, ref) => (
+  ({ className, linkTo, children, ...props }: TableCellProps, ref: any) => (
     <td
       ref={ref}
       className={clsx("inter-small-regular h-[40px]", className)}
       {...props}
       {...(linkTo && {
-        onClick: (e) => {
+        onClick: (e: { stopPropagation: () => void }) => {
           navigate(linkTo)
           e.stopPropagation()
         },
@@ -252,7 +254,7 @@ Table.Row = React.forwardRef(
       forceDropdown,
       ...props
     }: TableRowProps,
-    ref
+    ref: any
   ) => (
     <tr
       ref={ref}
@@ -270,7 +272,10 @@ Table.Row = React.forwardRef(
     >
       {children}
       {actions && (
-        <Table.Cell onClick={(e) => e.stopPropagation()} className="w-[32px]">
+        <Table.Cell
+          onClick={(e: { stopPropagation: () => any }) => e.stopPropagation()}
+          className="w-[32px]"
+        >
           <Actionables forceDropdown={forceDropdown} actions={actions} />
         </Table.Cell>
       )}
