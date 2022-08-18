@@ -1,125 +1,71 @@
 import { omit } from "lodash"
 import qs from "qs"
 import { useMemo, useReducer, useState } from "react"
-import { relativeDateFormatToTimestamp } from "../../../utils/time"
 
-type OrderDateFilter = null | {
+type ProductDateFilter = null | {
   gt?: string
   lt?: string
 }
 
-type OrderFilterAction =
-  | { type: "setQuery"; payload: string | null }
-  | { type: "setFilters"; payload: OrderFilterState }
-  | { type: "reset"; payload: OrderFilterState }
-  | { type: "setOffset"; payload: number }
-  | { type: "setDefaults"; payload: OrderDefaultFilters | null }
-  | { type: "setDate"; payload: OrderDateFilter }
-  | { type: "setStatus"; payload: null | string[] | string }
+type ProductFilterAction =
+  | { type: "setFilters"; payload: ProductFilterState }
+  | { type: "reset"; payload: ProductFilterState }
+  | { type: "setDefaults"; payload: ProductDefaultFilters | null }
   | { type: "setFulfillment"; payload: null | string[] | string }
   | { type: "setPayment"; payload: null | string[] | string }
+  | { type: "setLimit"; payload: number }
 
-interface OrderFilterState {
-  query?: string | null
-  region: {
-    open: boolean
-    filter: null | string[] | string
-  }
+interface ProductFilterState {
   status: {
     open: boolean
     filter: null | string[] | string
   }
-  fulfillment: {
+  collection: {
     open: boolean
     filter: null | string[] | string
   }
-  payment: {
+  tags: {
     open: boolean
     filter: null | string[] | string
   }
   date: {
     open: boolean
-    filter: OrderDateFilter
+    filter: ProductDateFilter
   }
-  limit: number
-  offset: number
-  additionalFilters: OrderDefaultFilters | null
+  additionalFilters: ProductDefaultFilters | null
 }
 
 const allowedFilters = [
   "status",
-  "region",
-  "fulfillment_status",
+  "collection_id",
   "payment_status",
   "created_at",
-  "q",
-  "offset",
-  "limit",
 ]
 
 const DefaultTabs = {
-  incomplete: {
-    fulfillment_status: ["not_fulfilled", "fulfilled"],
-    payment_status: ["awaiting"],
+  drafts: {
+    status: ["draft"],
   },
-  complete: {
-    fulfillment_status: ["shipped"],
-    payment_status: ["captured"],
+  proposed: {
+    status: ["proposed"],
   },
-}
-
-const formatDateFilter = (filter: OrderDateFilter) => {
-  if (filter === null) {
-    return filter
-  }
-
-  const dateFormatted = Object.entries(filter).reduce((acc, [key, value]) => {
-    if (value.includes("|")) {
-      acc[key] = relativeDateFormatToTimestamp(value)
-    } else {
-      acc[key] = value
-    }
-    return acc
-  }, {})
-
-  return dateFormatted
 }
 
 const reducer = (
-  state: OrderFilterState,
-  action: OrderFilterAction
-): OrderFilterState => {
+  state: ProductFilterState,
+  action: ProductFilterAction
+): ProductFilterState => {
   switch (action.type) {
     case "setFilters": {
       return {
         ...state,
-        region: action.payload.region,
-        fulfillment: action.payload.fulfillment,
-        payment: action.payload.payment,
         status: action.payload.status,
+        collection: action.payload.collection,
+        tags: action.payload.tags,
         date: action.payload.date,
-        query: action?.payload?.query,
       }
     }
-    case "setQuery": {
-      return {
-        ...state,
-        query: action.payload,
-      }
-    }
-    case "setDate": {
-      const newDateFilters = state.date
-      return {
-        ...state,
-        date: newDateFilters,
-      }
-    }
-    case "setOffset": {
-      return {
-        ...state,
-        offset: action.payload,
-      }
-    }
+
     case "reset": {
       return action.payload
     }
@@ -129,7 +75,7 @@ const reducer = (
   }
 }
 
-type OrderDefaultFilters = {
+type ProductDefaultFilters = {
   expand?: string
   fields?: string
 }
@@ -146,9 +92,9 @@ const eqSet = (as: Set<string>, bs: Set<string>) => {
   return true
 }
 
-export const useOrderFilters = (
+export const useProductFilters = (
   existing?: string,
-  defaultFilters: OrderDefaultFilters | null = null
+  defaultFilters: ProductDefaultFilters | null = null
 ) => {
   if (existing && existing[0] === "?") {
     existing = existing.substring(1)
@@ -160,7 +106,7 @@ export const useOrderFilters = (
   ])
 
   const initialTabs = useMemo(() => {
-    const storageString = localStorage.getItem("orders::filters")
+    const storageString = localStorage.getItem("products::filters")
     if (storageString) {
       const savedTabs = JSON.parse(storageString)
 
@@ -182,7 +128,7 @@ export const useOrderFilters = (
   const [state, dispatch] = useReducer(reducer, initial)
   const [tabs, setTabs] = useState(initialTabs)
 
-  const setDateFilter = (filter: OrderDateFilter | null) => {
+  const setDateFilter = (filter: ProductDateFilter | null) => {
     dispatch({ type: "setDate", payload: filter })
   }
 
@@ -198,19 +144,8 @@ export const useOrderFilters = (
     dispatch({ type: "setStatus", payload: filter })
   }
 
-  const setDefaultFilters = (filters: OrderDefaultFilters | null) => {
+  const setDefaultFilters = (filters: ProductDefaultFilters | null) => {
     dispatch({ type: "setDefaults", payload: filters })
-  }
-
-  const paginate = (direction: 1 | -1) => {
-    if (direction > 0) {
-      const nextOffset = state.offset + state.limit
-
-      dispatch({ type: "setOffset", payload: nextOffset })
-    } else {
-      const nextOffset = Math.max(state.offset - state.limit, 0)
-      dispatch({ type: "setOffset", payload: nextOffset })
-    }
   }
 
   const reset = () => {
@@ -218,20 +153,15 @@ export const useOrderFilters = (
       type: "setFilters",
       payload: {
         ...state,
-        offset: 0,
-        region: {
-          open: false,
-          filter: null,
-        },
-        payment: {
-          open: false,
-          filter: null,
-        },
-        fulfillment: {
-          open: false,
-          filter: null,
-        },
         status: {
+          open: false,
+          filter: null,
+        },
+        collection: {
+          open: false,
+          filter: null,
+        },
+        tags: {
           open: false,
           filter: null,
         },
@@ -239,48 +169,26 @@ export const useOrderFilters = (
           open: false,
           filter: null,
         },
-        query: null,
       },
     })
   }
 
-  const setFilters = (filters: OrderFilterState) => {
+  const setFilters = (filters: ProductFilterState) => {
     dispatch({ type: "setFilters", payload: filters })
-  }
-
-  const setQuery = (queryString: string | null) => {
-    dispatch({ type: "setQuery", payload: queryString })
   }
 
   const getQueryObject = () => {
     const toQuery: any = { ...state.additionalFilters }
     for (const [key, value] of Object.entries(state)) {
-      if (key === "query") {
-        if (value && typeof value === "string") {
-          toQuery["q"] = value
-        }
-      } else if (key === "offset" || key === "limit") {
-        toQuery[key] = value
-      } else if (value.open) {
-        if (key === "date") {
-          toQuery[stateFilterMap[key]] = formatDateFilter(
-            value.filter as OrderDateFilter
-          )
-        } else {
-          toQuery[stateFilterMap[key]] = value.filter
-        }
+      if (value?.open) {
+        toQuery[stateFilterMap[key]] = value.filter
       }
     }
 
     return toQuery
   }
 
-  const getQueryString = () => {
-    const obj = getQueryObject()
-    return qs.stringify(obj, { skipNulls: true })
-  }
-
-  const getRepresentationObject = (fromObject?: OrderFilterState) => {
+  const getRepresentationObject = (fromObject?: ProductFilterState) => {
     const objToUse = fromObject ?? state
 
     const toQuery: any = {}
@@ -291,7 +199,7 @@ export const useOrderFilters = (
         }
       } else if (key === "offset" || key === "limit") {
         toQuery[key] = value
-      } else if (value.open) {
+      } else if (value?.open) {
         toQuery[stateFilterMap[key]] = value.filter
       }
     }
@@ -355,12 +263,8 @@ export const useOrderFilters = (
   const availableTabs = useMemo(() => {
     return [
       {
-        label: "Complete",
-        value: "complete",
-      },
-      {
-        label: "Incomplete",
-        value: "incomplete",
+        label: "Unpublished",
+        value: "drafts",
       },
       ...tabs,
     ]
@@ -384,15 +288,15 @@ export const useOrderFilters = (
           open: false,
           filter: null,
         },
-        payment: {
-          open: false,
-          filter: null,
-        },
-        fulfillment: {
-          open: false,
-          filter: null,
-        },
         status: {
+          open: false,
+          filter: null,
+        },
+        tags: {
+          open: false,
+          filter: null,
+        },
+        collection: {
           open: false,
           filter: null,
         },
@@ -408,12 +312,12 @@ export const useOrderFilters = (
     }
   }
 
-  const saveTab = (tabName: string, filters: OrderFilterState) => {
+  const saveTab = (tabName: string, filters: ProductFilterState) => {
     const repObj = getRepresentationObject({ ...filters })
     const clean = omit(repObj, ["limit", "offset"])
     const repString = qs.stringify(clean, { skipNulls: true })
 
-    const storedString = localStorage.getItem("orders::filters")
+    const storedString = localStorage.getItem("products::filters")
 
     let existing: null | object = null
 
@@ -423,14 +327,20 @@ export const useOrderFilters = (
 
     if (existing) {
       existing[tabName] = repString
-      localStorage.setItem("orders::filters", JSON.stringify(existing))
+      localStorage.setItem("products::filters", JSON.stringify(existing))
     } else {
       const newFilters = {}
       newFilters[tabName] = repString
-      localStorage.setItem("orders::filters", JSON.stringify(newFilters))
+      localStorage.setItem("products::filters", JSON.stringify(newFilters))
     }
 
     setTabs((prev) => {
+      const duplicate = prev.findIndex(
+        (prev) => prev.label?.toLowerCase() === tabName.toLowerCase()
+      )
+      if (duplicate !== -1) {
+        prev.splice(duplicate, 1)
+      }
       return [
         ...prev,
         {
@@ -446,7 +356,7 @@ export const useOrderFilters = (
   }
 
   const removeTab = (tabValue: string) => {
-    const storedString = localStorage.getItem("orders::filters")
+    const storedString = localStorage.getItem("products::filters")
 
     let existing: null | object = null
 
@@ -456,7 +366,7 @@ export const useOrderFilters = (
 
     if (existing) {
       delete existing[tabValue]
-      localStorage.setItem("orders::filters", JSON.stringify(existing))
+      localStorage.setItem("products::filters", JSON.stringify(existing))
     }
 
     setTabs((prev) => {
@@ -478,10 +388,6 @@ export const useOrderFilters = (
     representationObject,
     representationString,
     queryObject,
-    paginate,
-    getQueryObject,
-    getQueryString,
-    setQuery,
     setFilters,
     setDefaultFilters,
     setDateFilter,
@@ -494,38 +400,32 @@ export const useOrderFilters = (
 
 const filterStateMap = {
   status: "status",
-  fulfillment_status: "fulfillment",
-  payment_status: "payment",
+  collection_id: "collection",
+  tags: "tags",
   created_at: "date",
-  region_id: "region",
 }
 
 const stateFilterMap = {
-  region: "region_id",
   status: "status",
-  fulfillment: "fulfillment_status",
-  payment: "payment_status",
+  collection: "collection_id",
+  tags: "tags",
   date: "created_at",
 }
 
 const parseQueryString = (
   queryString?: string,
-  additionals: OrderDefaultFilters | null = null
-): OrderFilterState => {
-  const defaultVal: OrderFilterState = {
+  additionals: ProductDefaultFilters | null = null
+): ProductFilterState => {
+  const defaultVal: ProductFilterState = {
     status: {
       open: false,
       filter: null,
     },
-    fulfillment: {
+    collection: {
       open: false,
       filter: null,
     },
-    region: {
-      open: false,
-      filter: null,
-    },
-    payment: {
+    tags: {
       open: false,
       filter: null,
     },
@@ -533,8 +433,6 @@ const parseQueryString = (
       open: false,
       filter: null,
     },
-    offset: 0,
-    limit: 15,
     additionalFilters: additionals,
   }
 
@@ -543,24 +441,6 @@ const parseQueryString = (
     for (const [key, value] of Object.entries(filters)) {
       if (allowedFilters.includes(key)) {
         switch (key) {
-          case "offset": {
-            if (typeof value === "string") {
-              defaultVal.offset = parseInt(value)
-            }
-            break
-          }
-          case "limit": {
-            if (typeof value === "string") {
-              defaultVal.limit = parseInt(value)
-            }
-            break
-          }
-          case "q": {
-            if (typeof value === "string") {
-              defaultVal.query = value
-            }
-            break
-          }
           case "status": {
             if (typeof value === "string" || Array.isArray(value)) {
               defaultVal.status = {
@@ -570,18 +450,9 @@ const parseQueryString = (
             }
             break
           }
-          case "fulfillment_status": {
+          case "collection_id": {
             if (typeof value === "string" || Array.isArray(value)) {
-              defaultVal.fulfillment = {
-                open: true,
-                filter: value,
-              }
-            }
-            break
-          }
-          case "region_id": {
-            if (typeof value === "string" || Array.isArray(value)) {
-              defaultVal.region = {
+              defaultVal.collection = {
                 open: true,
                 filter: value,
               }
