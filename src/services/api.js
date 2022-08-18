@@ -617,6 +617,11 @@ export default {
 
       return multipartRequest("/admin/uploads", formData)
     },
+
+    delete(file) {
+      const path = `/admin/uploads/delete`
+      return medusaRequest("POST", path, { file })
+    },
   },
 
   draftOrders: {

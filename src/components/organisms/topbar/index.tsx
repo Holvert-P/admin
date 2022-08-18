@@ -2,8 +2,6 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { navigate } from "gatsby"
 import React, { useContext, useState } from "react"
 import { AccountContext } from "../../../context/account"
-import { PollingContext } from "../../../context/polling"
-import useToggleState from "../../../hooks/use-toggle-state"
 import Avatar from "../../atoms/avatar"
 import Button from "../../fundamentals/button"
 import GearIcon from "../../fundamentals/icons/gear-icon"
@@ -11,20 +9,12 @@ import HelpCircleIcon from "../../fundamentals/icons/help-circle"
 import SignOutIcon from "../../fundamentals/icons/log-out-icon"
 import NotificationBell from "../../molecules/notification-bell"
 import SearchBar from "../../molecules/search-bar"
-import ActivityDrawer from "../activity-drawer"
 import MailDialog from "../help-dialog"
 
 const Topbar: React.FC = () => {
-  const {
-    state: activityDrawerState,
-    toggle: toggleActivityDrawer,
-    close: activityDrawerClose,
-  } = useToggleState(false)
-
   const { first_name, last_name, email, handleLogout } = useContext(
     AccountContext
   )
-  const { batchJobs } = useContext(PollingContext)
 
   const [showSupportform, setShowSupportForm] = useState(false)
 
@@ -45,13 +35,7 @@ const Topbar: React.FC = () => {
         >
           <HelpCircleIcon size={24} />
         </Button>
-
-        <NotificationBell
-          onClick={toggleActivityDrawer}
-          variant={"ghost"}
-          hasNotifications={!!batchJobs}
-        />
-
+        <NotificationBell hasNotifications={false} />
         <div className="ml-large w-large h-large">
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
@@ -92,9 +76,6 @@ const Topbar: React.FC = () => {
       </div>
       {showSupportform && (
         <MailDialog onDismiss={() => setShowSupportForm(false)} />
-      )}
-      {activityDrawerState && (
-        <ActivityDrawer onDismiss={activityDrawerClose} />
       )}
     </div>
   )

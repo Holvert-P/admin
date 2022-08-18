@@ -1,9 +1,4 @@
-import {
-  LineItem as RawLineItem,
-  Order,
-  Return,
-  ReturnItem,
-} from "@medusajs/medusa"
+import { LineItem, Order, Return, ReturnItem } from "@medusajs/medusa"
 import React, { useEffect, useMemo, useState } from "react"
 import Button from "../../../../components/fundamentals/button"
 import EditIcon from "../../../../components/fundamentals/icons/edit-icon"
@@ -28,8 +23,6 @@ type ReceiveMenuProps = {
   refunded?: boolean
 }
 
-type LineItem = Omit<RawLineItem, "beforeInsert">
-
 const ReceiveMenu: React.FC<ReceiveMenuProps> = ({
   order,
   returnRequest,
@@ -49,6 +42,11 @@ const ReceiveMenu: React.FC<ReceiveMenuProps> = ({
 
   const allItems: Omit<LineItem, "beforeInsert">[] = useMemo(() => {
     const idLookUp = returnRequest.items.map((i) => i.item_id)
+    const quantityLookUp: Map<string, number> = new Map()
+
+    for (const ri of returnRequest.items) {
+      quantityLookUp.set(ri.item_id, ri.quantity)
+    }
 
     let allItems = [...order.items]
 
@@ -66,6 +64,7 @@ const ReceiveMenu: React.FC<ReceiveMenuProps> = ({
 
     const withAdjustedQuantity = allItems
       .filter((i) => idLookUp.includes(i.id))
+      .map((i) => ({ ...i, quantity: quantityLookUp.get(i.id) || i.quantity }))
 
     return withAdjustedQuantity
   }, [order, returnRequest])
@@ -76,21 +75,12 @@ const ReceiveMenu: React.FC<ReceiveMenuProps> = ({
     returnRequest.items.forEach((i: ReturnItem) => {
       const item = allItems.find((l) => l.id === i.item_id)
       if (item && item.quantity - item.returned_quantity > 0) {
-        returns[i.item_id] = {
-          ...item,
-          quantity: returnRequest.items.find((i) => i.item_id === item.id)?.quantity
-        }
+        returns[i.item_id] = item
       }
     })
 
     setToReturn(returns)
   }, [allItems])
-
-  const shippingTaxRate = useMemo(() => {
-    return returnRequest.shipping_method.tax_lines.reduce((acc, curr) => {
-      return acc + curr.rate
-    }, 0)
-  }, [returnRequest])
 
   useEffect(() => {
     if (!Object.entries(toReturn).length) {
@@ -98,31 +88,26 @@ const ReceiveMenu: React.FC<ReceiveMenuProps> = ({
       return
     }
 
-    const items = Object.keys(toReturn)
-      .map((t) => ({
-        ...allItems.find((i) => i.id === t),
-      }))
-      .filter((i) => typeof i !== "undefined") as LineItem[]
+    const items = Object.keys(toReturn).map((t) => ({
+      ...allItems.find((i) => i.id === t),
+      quantity: toReturn[t].quantity,
+    }))
 
-    const itemTotal = items.reduce((acc: number, curr: LineItem): number => {
-      const unitRefundable =
-        (curr.refundable || 0) / (curr.quantity - curr.returned_quantity)
-
-      return acc + unitRefundable * toReturn[curr.id].quantity
-    }, 0)
-
-    const shippingTotal =
-      (returnRequest.shipping_method &&
+    const total =
+      items.reduce((acc, next) => {
+        return typeof next === "undefined"
+          ? acc
+          : acc + next.quantity * (next?.unit_price || 0)
+      }, 0) -
+      ((returnRequest.shipping_method &&
         returnRequest.shipping_method.price *
-          (1 + shippingTaxRate / 100)) ||
-      0
-
-    const total = itemTotal - shippingTotal
+          (1 + (order.tax_rate || 0) / 100)) ||
+        0)
 
     if (!refundEdited || total < refundAmount) {
       setRefundAmount(refundAmount < 0 ? 0 : total)
     }
-  }, [toReturn, shippingTaxRate])
+  }, [toReturn])
 
   const onSubmit = () => {
     const items = Object.keys(toReturn).map((k) => ({
@@ -192,7 +177,7 @@ const ReceiveMenu: React.FC<ReceiveMenuProps> = ({
                     <span>
                       {(
                         (returnRequest.shipping_method.price / 100) *
-                        (1 + shippingTaxRate / 100)
+                        (order.tax_rate ? 1 + order.tax_rate / 100 : 1)
                       ).toFixed(2)}{" "}
                       <span className="text-grey-50">
                         {order.currency_code.toUpperCase()}

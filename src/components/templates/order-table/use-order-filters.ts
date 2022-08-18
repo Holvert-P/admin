@@ -21,10 +21,6 @@ type OrderFilterAction =
 
 interface OrderFilterState {
   query?: string | null
-  region: {
-    open: boolean
-    filter: null | string[] | string
-  }
   status: {
     open: boolean
     filter: null | string[] | string
@@ -48,7 +44,6 @@ interface OrderFilterState {
 
 const allowedFilters = [
   "status",
-  "region",
   "fulfillment_status",
   "payment_status",
   "created_at",
@@ -93,7 +88,6 @@ const reducer = (
     case "setFilters": {
       return {
         ...state,
-        region: action.payload.region,
         fulfillment: action.payload.fulfillment,
         payment: action.payload.payment,
         status: action.payload.status,
@@ -219,10 +213,6 @@ export const useOrderFilters = (
       payload: {
         ...state,
         offset: 0,
-        region: {
-          open: false,
-          filter: null,
-        },
         payment: {
           open: false,
           filter: null,
@@ -497,11 +487,9 @@ const filterStateMap = {
   fulfillment_status: "fulfillment",
   payment_status: "payment",
   created_at: "date",
-  region_id: "region",
 }
 
 const stateFilterMap = {
-  region: "region_id",
   status: "status",
   fulfillment: "fulfillment_status",
   payment: "payment_status",
@@ -518,10 +506,6 @@ const parseQueryString = (
       filter: null,
     },
     fulfillment: {
-      open: false,
-      filter: null,
-    },
-    region: {
       open: false,
       filter: null,
     },
@@ -573,15 +557,6 @@ const parseQueryString = (
           case "fulfillment_status": {
             if (typeof value === "string" || Array.isArray(value)) {
               defaultVal.fulfillment = {
-                open: true,
-                filter: value,
-              }
-            }
-            break
-          }
-          case "region_id": {
-            if (typeof value === "string" || Array.isArray(value)) {
-              defaultVal.region = {
                 open: true,
                 filter: value,
               }

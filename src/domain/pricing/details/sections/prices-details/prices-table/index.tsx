@@ -1,17 +1,12 @@
 import { Product } from "@medusajs/medusa"
-import {
-  useAdminPriceListProducts,
-  useAdminDeletePriceListProductPrices,
-} from "medusa-react"
+import { useAdminPriceListProducts } from "medusa-react"
 import * as React from "react"
 import { HeaderGroup, Row } from "react-table"
 import CancelIcon from "../../../../../../components/fundamentals/icons/cancel-icon"
 import EditIcon from "../../../../../../components/fundamentals/icons/edit-icon"
 import Table from "../../../../../../components/molecules/table"
 import { SelectableTable } from "../../../../../../components/templates/selectable-table"
-import useNotification from "../../../../../../hooks/use-notification"
 import useQueryFilters from "../../../../../../hooks/use-query-filters"
-import { getErrorMessage } from "../../../../../../utils/error-messages"
 import usePricesColumns from "./use-columns"
 
 const DEFAULT_PAGE_SIZE = 9
@@ -43,11 +38,24 @@ const PricesTable = ({ id, selectProduct }: PricesTableProps) => {
             selectProduct(row.original)
           }
 
+          const actions = [
+            {
+              label: "Edit prices",
+              icon: <EditIcon size={20} />,
+              onClick: handleSelect,
+            },
+            {
+              label: "Remove product",
+              icon: <CancelIcon size={20} />,
+              variant: "danger" as const,
+              onClick: () => {},
+            },
+          ]
+
           return (
-            <PricesTableRow
+            <Table.Row
               {...row.getRowProps()}
-              product={row.original}
-              priceListId={id}
+              actions={actions}
               onClick={handleSelect}
               className="hover:bg-grey-5 hover:cursor-pointer"
             >
@@ -58,7 +66,7 @@ const PricesTable = ({ id, selectProduct }: PricesTableProps) => {
                   </Table.Cell>
                 )
               })}
-            </PricesTableRow>
+            </Table.Row>
           )
         }}
         renderHeaderGroup={ProductHeader}
@@ -87,52 +95,6 @@ const ProductHeader = ({
         </Table.HeadCell>
       ))}
     </Table.HeadRow>
-  )
-}
-
-const PricesTableRow = ({
-  children,
-  priceListId,
-  product,
-  onClick,
-  ...props
-}) => {
-  const notification = useNotification()
-  const deleteProductPrices = useAdminDeletePriceListProductPrices(
-    priceListId,
-    product.id
-  )
-
-  const actions = [
-    {
-      label: "Edit prices",
-      icon: <EditIcon size={20} />,
-      onClick: onClick,
-    },
-    {
-      label: "Remove product",
-      icon: <CancelIcon size={20} />,
-      variant: "danger" as const,
-      onClick: () => {
-        deleteProductPrices.mutate(undefined, {
-          onSuccess: () => {
-            notification(
-              "Success",
-              `Deleted prices of product: ${product.title}`,
-              "success"
-            )
-          },
-          onError: (err) =>
-            notification("Error", getErrorMessage(err), "error"),
-        })
-      },
-    },
-  ]
-
-  return (
-    <Table.Row {...props} actions={actions}>
-      {children}
-    </Table.Row>
   )
 }
 

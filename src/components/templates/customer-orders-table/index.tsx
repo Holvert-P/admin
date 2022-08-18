@@ -23,7 +23,6 @@ const CustomerOrdersTable: React.FC<CustomerOrdersTableProps> = ({
     customer_id: customerId,
     offset: 0,
     limit: 14,
-    expand: "items",
   })
 
   const containerRef = useRef(null)

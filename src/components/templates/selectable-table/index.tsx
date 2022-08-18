@@ -121,7 +121,6 @@ export const SelectableTable = <
         {...options}
         {...table.getTableProps()}
         handleSearch={options.enableSearch ? debouncedSearch : undefined}
-        className="min-h-[350px] relative"
       >
         {renderHeaderGroup && (
           <Table.Head>
@@ -133,11 +132,9 @@ export const SelectableTable = <
 
         <Table.Body {...table.getTableBodyProps()}>
           {isLoading ? (
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-              <Spinner size="large" variant="secondary" />
-            </div>
+            <Spinner size="large" />
           ) : (
-            table.rows.map((row) => {
+            table.rows.map((row, i) => {
               table.prepareRow(row)
               return renderRow({ row })
             })

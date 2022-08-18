@@ -212,7 +212,7 @@ function CustomersListTable(props: CustomersListTableProps) {
         limit={queryObject.limit}
         offset={queryObject.offset}
         pageSize={queryObject.offset + table.rows.length}
-        title="Customer Groups"
+        title="Customers"
         currentPage={table.state.pageIndex + 1}
         pageCount={table.pageCount}
         nextPage={handleNext}

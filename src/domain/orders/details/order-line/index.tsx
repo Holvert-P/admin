@@ -1,7 +1,7 @@
 import React from "react"
 import { formatAmountWithSymbol } from "../../../../utils/prices"
 
-const OrderLine = ({ item, currencyCode }) => {
+const OrderLine = ({ item, region }) => {
   return (
     <div className="flex justify-between mb-1 h-[64px] py-2 mx-[-5px] px-[5px] hover:bg-grey-5 rounded-rounded">
       <div className="flex space-x-4 justify-center">
@@ -24,9 +24,9 @@ const OrderLine = ({ item, currencyCode }) => {
           <div className="inter-small-regular text-grey-50">
             {formatAmountWithSymbol({
               amount: item.unit_price,
-              currency: currencyCode,
+              currency: region?.currency_code,
               digits: 2,
-              tax: item.tax_lines,
+              tax: region?.tax_rate,
             })}
           </div>
           <div className="inter-small-regular text-grey-50">
@@ -35,13 +35,15 @@ const OrderLine = ({ item, currencyCode }) => {
           <div className="inter-small-regular text-grey-90">
             {formatAmountWithSymbol({
               amount: item.unit_price * item.quantity,
-              currency: currencyCode,
+              currency: region?.currency_code,
               digits: 2,
-              tax: item.tax_lines,
+              tax: region?.tax_rate,
             })}
           </div>
         </div>
-        <div className="inter-small-regular text-grey-50">{currencyCode}</div>
+        <div className="inter-small-regular text-grey-50">
+          {region?.currency_code.toUpperCase()}
+        </div>
       </div>
     </div>
   )

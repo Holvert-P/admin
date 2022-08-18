@@ -24,7 +24,6 @@ import TagIcon from "./tag-icon"
 import TruckIcon from "./truck-icon"
 import UnpublishIcon from "./unpublish-icon"
 import UsersIcon from "./users-icon"
-import SidedMouthFaceIcon from "./sided-mouth-face"
 
 export default {
   title: "Fundamentals/Icons/Overview",
@@ -64,7 +63,6 @@ const icons = [
   <EditIcon />,
   <UnpublishIcon />,
   <PublishIcon />,
-  <SidedMouthFaceIcon />
 ]
 
 const Template = args => (

@@ -5,7 +5,6 @@ import { FieldValues } from "react-hook-form"
 import toast from "react-hot-toast"
 import Toaster from "../../components/declarative-toaster"
 import FormToasterContainer from "../../components/molecules/form-toaster"
-import { FeatureFlagContext } from "../../context/feature-flag"
 import useNotification from "../../hooks/use-notification"
 import Medusa from "../../services/api"
 import { consolidateImages } from "../../utils/consolidate-images"
@@ -25,8 +24,6 @@ const NewProductPage = () => {
   const notification = useNotification()
   const createProduct = useAdminCreateProduct()
   const [isLoading, setIsLoading] = useState(false)
-
-  const { isFeatureEnabled } = React.useContext(FeatureFlagContext)
 
   const onSubmit = async (data, viewType) => {
     setIsLoading(true)
@@ -54,20 +51,17 @@ const NewProductPage = () => {
       images: consolidateImages(data.images, uploadedImgs),
     }
 
-    createProduct.mutate(
-      formValuesToCreateProductMapper(newData, viewType, isFeatureEnabled),
-      {
-        onSuccess: ({ product }) => {
-          setIsLoading(false)
-          notification("Success", "Product was succesfully created", "success")
-          navigate(`/a/products/${product.id}`)
-        },
-        onError: (error) => {
-          setIsLoading(false)
-          notification("Error", getErrorMessage(error), "error")
-        },
-      }
-    )
+    createProduct.mutate(formValuesToCreateProductMapper(newData, viewType), {
+      onSuccess: ({ product }) => {
+        setIsLoading(false)
+        notification("Success", "Product was succesfully created", "success")
+        navigate(`/a/products/${product.id}`)
+      },
+      onError: (error) => {
+        setIsLoading(false)
+        notification("Error", getErrorMessage(error), "error")
+      },
+    })
   }
 
   return (
@@ -90,12 +84,10 @@ const SaveNotification = ({ isLoading = false }) => {
 
   const onPublish = (values: FieldValues) => {
     onSubmit({ ...values, status: "published" })
-    resetForm()
   }
 
   const onSaveDraft = (values: FieldValues) => {
     onSubmit({ ...values, status: "draft" })
-    resetForm()
   }
 
   const isDirty = checkForDirtyState(

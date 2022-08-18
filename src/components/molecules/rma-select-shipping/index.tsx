@@ -4,7 +4,6 @@ import TrashIcon from "../../fundamentals/icons/trash-icon"
 import CurrencyInput from "../../organisms/currency-input"
 
 type RMAShippingPriceProps = {
-  inclTax: boolean
   useCustomShippingPrice: boolean
   shippingPrice: number | undefined
   currencyCode: string
@@ -14,7 +13,6 @@ type RMAShippingPriceProps = {
 
 const RMAShippingPrice: React.FC<RMAShippingPriceProps> = ({
   useCustomShippingPrice,
-  inclTax,
   shippingPrice,
   currencyCode,
   updateShippingPrice,
@@ -29,7 +27,7 @@ const RMAShippingPrice: React.FC<RMAShippingPriceProps> = ({
         className="w-full"
       >
         <CurrencyInput.AmountInput
-          label={`Amount (${inclTax ? "incl." : "excl."} tax)`}
+          label={"Amount (excl. tax)"}
           amount={shippingPrice}
           onChange={updateShippingPrice}
         />

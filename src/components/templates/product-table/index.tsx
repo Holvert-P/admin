@@ -4,7 +4,6 @@ import { useAdminProducts } from "medusa-react"
 import qs from "qs"
 import React, { useEffect, useState } from "react"
 import { usePagination, useTable } from "react-table"
-import { FeatureFlagContext } from "../../../context/feature-flag"
 import ProductsFilter from "../../../domain/products/filter-dropdown"
 import Spinner from "../../atoms/spinner"
 import Table, { TablePagination } from "../../molecules/table"
@@ -19,22 +18,13 @@ const DEFAULT_PAGE_SIZE_TILE_VIEW = 18
 type ProductTableProps = {}
 
 const defaultQueryProps = {
-  fields: "id,title,type,thumbnail,status",
+  fields: "id,title,type,thumbnail",
   expand: "variants,options,variants.prices,variants.options,collection,tags",
   is_giftcard: false,
 }
 
 const ProductTable: React.FC<ProductTableProps> = () => {
   const location = useLocation()
-
-  const { isFeatureEnabled } = React.useContext(FeatureFlagContext)
-
-  let hiddenColumns = ["sales_channel"]
-  if (isFeatureEnabled("sales_channels")) {
-    defaultQueryProps.expand =
-      "variants,options,variants.prices,variants.options,collection,tags,sales_channels"
-    hiddenColumns = []
-  }
 
   const {
     removeTab,
@@ -131,7 +121,6 @@ const ProductTable: React.FC<ProductTableProps> = () => {
       initialState: {
         pageIndex: Math.floor(offs / limit),
         pageSize: limit,
-        hiddenColumns,
       },
       pageCount: numPages,
       autoResetPage: false,
